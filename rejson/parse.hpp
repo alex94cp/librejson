@@ -16,6 +16,8 @@
 #include <sstream>
 #include <stdexcept>
 
+#include <iostream>
+
 #ifdef __has_include
 #	if __has_include(<string_view>)
 #		include <string_view>
@@ -205,8 +207,7 @@ constexpr bool in_range(T x, Min min, Max max)
 	return x >= min && x <= max;
 }
 
-inline constexpr
-bool is_codept_group(char16_t first, char16_t second)
+constexpr bool is_codept_group(char16_t first, char16_t second)
 {
 	return in_range(first, 0xd800, 0xdbff)
 	    && in_range(second, 0xdc00, 0xdfff);
@@ -218,18 +219,12 @@ char parse_escaped(Iterator begin, Iterator end, Iterator & iter)
 	consume(begin, end, '\\', iter);
 	const auto chr = next_char(iter, end, iter);
 	switch (chr) {
-	case 'b':
-		return '\b';
-	case 'f':
-		return '\f';
-	case 'n':
-		return '\n';
-	case 'r':
-		return '\r';
-	case 't':
-		return '\t';
-	default:
-		return chr;
+	case 'b': return '\b';
+	case 'f': return '\f';
+	case 'n': return '\n';
+	case 'r': return '\r';
+	case 't': return '\t';
+	default:  return chr;
 	}
 }
 
@@ -271,6 +266,8 @@ String parse_string(Iterator begin, Iterator end, Iterator & iter)
 			if (last_code_pt != -1)
 				encode_utf8(last_code_pt, oss);
 			last_code_pt = -1;
+			if (std::iscntrl(chr))
+				throw ParseError("unescaped data in string");
 			oss.put(chr);
 			++iter;
 		}

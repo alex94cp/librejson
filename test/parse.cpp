@@ -44,6 +44,12 @@ TEST(ParseTests, ParseCodePointStringWorks) {
 	ASSERT_EQ(value.as_string(), "\x41");
 }
 
+TEST(ParseTests, ParseStringThrowsIfUnescaped) {
+	ASSERT_THROW({
+		rejson::parse("\"\t\"");
+	}, rejson::ParseError);
+}
+
 TEST(ParseTests, ParseArrayWorks) {
 	const rejson::Int expected[] = { 1, 2, 3 };
 	const auto value = rejson::parse("[1,2,3]");
