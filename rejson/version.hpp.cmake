@@ -1,0 +1,8 @@
+#ifndef REJSON_VERSION_HPP_
+#define REJSON_VERSION_HPP_
+
+#define REJSON_VERSION_MAJOR @librejson_VERSION_MAJOR@
+#define REJSON_VERSION_MINOR @librejson_VERSION_MINOR@
+#define REJSON_VERSION_PATCH @librejson_VERSION_PATCH@
+
+#endif
