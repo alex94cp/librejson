@@ -1,0 +1,25 @@
+language: cpp
+
+sudo: required
+dist: trusty
+
+addons:
+  apt:
+    sources:
+      # add PPAs with more up-to-date toolchains
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-6
+      - cmake
+      - cmake-data
+      - libboost-dev
+
+compiler:
+  - gcc
+
+before_script:
+  - mkdir build
+  - cd build
+  - CXX=g++-6 cmake ..
+
+script: make && make test
