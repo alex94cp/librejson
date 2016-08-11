@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <cmath>
 #include <istream>
+#include <iterator>
 #include <sstream>
 #include <stdexcept>
 
@@ -73,43 +74,63 @@ Value parse_value(Iterator begin, Iterator end, Iterator & iter);
 
 void encode_utf8(char32_t code_pt, std::ostringstream & os);
 
-template <class Iterator, typename CharT>
-void consume(Iterator begin, Iterator end,
-             CharT token, Iterator & iter)
-{
-	using namespace std::literals::string_literals;
+template <class Iterator>
+using char_type = typename std::iterator_traits<Iterator>::value_type;
 
+template <class Iterator, typename CharT>
+bool try_next_char(Iterator begin, Iterator end, Iterator & iter, CharT & chr)
+{
+	if (begin == end)
+		return false;
 	iter = begin;
-	if (iter == end)
+	chr = *iter++;
+	return true;
+}
+
+template <class Iterator>
+auto next_char(Iterator begin, Iterator end, Iterator & iter)
+{
+	char_type<Iterator> chr;
+	if (!try_next_char(begin, end, iter, chr))
 		throw ParseError("unexpected end of input");
-	if (*iter != token)
-		throw ParseError("expected '"s + token + "' token");
-	++iter;
+	return chr;
 }
 
 template <class Iterator, typename CharT>
-bool try_consume(Iterator begin, Iterator end,
-                 CharT token, Iterator & iter)
+void consume(Iterator begin, Iterator end, CharT token, Iterator & iter)
 {
-	iter = begin;
-	if (iter == end || *iter != token)
+	using namespace std::literals::string_literals;
+	const auto chr = next_char(begin, end, iter);
+	if (chr != token)
+		throw ParseError("expected '"s + token + "' token");
+}
+
+template <class Iterator, typename CharT>
+bool try_consume(Iterator begin, Iterator end, CharT token, Iterator & iter)
+{
+	Iterator try_iter;
+	char_type<Iterator> chr;
+	if (!try_next_char(begin, end, try_iter, chr))
 		return false;
-	return ++iter, true;
+	if (chr != token)
+		return false;
+	iter = try_iter;
+	return true;
 }
 
 template <class Iterator, typename CharT>
 bool try_consume(Iterator begin, Iterator end,
                  const CharT * tokens, Iterator & iter)
 {
-	iter = begin;
-	auto itercmp = iter;
-	while (*tokens) {
-		if (itercmp == end)
+	Iterator try_iter = begin;
+	while (const char t = *tokens++) {
+		char_type<Iterator> chr;
+		if (!try_next_char(try_iter, end, try_iter, chr))
 			return false;
-		if (*itercmp++ != *tokens++)
+		if (chr != t)
 			return false;
 	}
-	iter = itercmp;
+	iter = try_iter;
 	return true;
 }
 
@@ -141,20 +162,21 @@ template <class Iterator>
 bool try_parse_xdigit(Iterator begin, Iterator end,
                       Iterator & iter, std::uint8_t & xdigit)
 {
-	iter = begin;
-	if (iter == end)
+	Iterator try_iter;
+	char_type<Iterator> chr;
+	if (!try_next_char(begin, end, try_iter, chr))
 		return false;
-	const auto c = *iter;
-	if (std::isdigit(c)) {
-		xdigit = c - '0';
-	} else if (c >= 'a' && c <= 'f') {
-		xdigit = 10 + (c - 'a');
-	} else if (c >= 'A' && c <= 'F') {
-		xdigit = 10 + (c - 'A');
+	if (std::isdigit(chr)) {
+		xdigit = chr - '0';
+	} else if (chr >= 'a' && chr <= 'f') {
+		xdigit = 10 + (chr - 'a');
+	} else if (chr >= 'A' && chr <= 'F') {
+		xdigit = 10 + (chr - 'A');
 	} else {
 		return false;
 	}
-	return ++iter, true;
+	iter = try_iter;
+	return true;
 }
 
 template <class Iterator>
@@ -183,14 +205,42 @@ constexpr bool in_range(T x, Min min, Max max)
 	return x >= min && x <= max;
 }
 
-template <class Iterator, typename CharT = decltype(*std::declval<Iterator>())>
+inline constexpr
+bool is_codept_group(char16_t first, char16_t second)
+{
+	return in_range(first, 0xd800, 0xdbff)
+	    && in_range(second, 0xdc00, 0xdfff);
+}
+
+template <class Iterator>
+char parse_escaped(Iterator begin, Iterator end, Iterator & iter)
+{
+	consume(begin, end, '\\', iter);
+	const auto chr = next_char(iter, end, iter);
+	switch (chr) {
+	case 'b':
+		return '\b';
+	case 'f':
+		return '\f';
+	case 'n':
+		return '\n';
+	case 'r':
+		return '\r';
+	case 't':
+		return '\t';
+	default:
+		return chr;
+	}
+}
+
+template <class Iterator>
 String parse_string(Iterator begin, Iterator end, Iterator & iter)
 {
+	long last_code_pt = -1;
 	std::ostringstream oss;
 	consume(begin, end, '"', iter);
-	long last_code_pt = -1;
 	while (iter != end) {
-		switch (*iter) {
+		switch (const char chr = *iter) {
 		case '"':
 			if (last_code_pt != -1)
 				encode_utf8(last_code_pt, oss);
@@ -198,26 +248,31 @@ String parse_string(Iterator begin, Iterator end, Iterator & iter)
 		case '\\': {
 			char16_t code_pt;
 			if (try_parse_codept(iter, end, iter, code_pt)) {
-				if (in_range(last_code_pt, 0xd800, 0xdbff)
-				    && in_range(code_pt, 0xdc00, 0xdfff)) {
+				if (is_codept_group(last_code_pt, code_pt)) {
 					const auto hi = last_code_pt - 0xd800;
 					const auto lo = code_pt - 0xdc00 + 0x10000;
 					encode_utf8(hi << 10 | lo, oss);
 					last_code_pt = -1;
 				} else {
 					if (last_code_pt != -1)
-						encode_utf8(code_pt, oss);
+						encode_utf8(last_code_pt, oss);
 					last_code_pt = code_pt;
 				}
-				break;
 			} else {
-				++iter;
-			} }
+				const auto esc = parse_escaped(iter, end, iter);
+				if (last_code_pt != -1)
+					encode_utf8(last_code_pt, oss);
+				last_code_pt = -1;
+				oss.put(esc);
+			}
+			break;
+		}
 		default:
 			if (last_code_pt != -1)
 				encode_utf8(last_code_pt, oss);
 			last_code_pt = -1;
-			oss.put(*iter++);
+			oss.put(chr);
+			++iter;
 		}
 	}
 	throw ParseError("unexpected end of input");

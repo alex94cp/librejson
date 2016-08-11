@@ -35,8 +35,8 @@ TEST(ParseTests, ParseStringWorks) {
 }
 
 TEST(ParseTests, ParseEscapedStringWorks) {
-	const auto value = rejson::parse("\"\\\\\"");
-	ASSERT_EQ(value.as_string(), "\\");
+	const auto value = rejson::parse("\"\\n\"");
+	ASSERT_EQ(value.as_string(), "\n");
 }
 
 TEST(ParseTests, ParseCodePointStringWorks) {
