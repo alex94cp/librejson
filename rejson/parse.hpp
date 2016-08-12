@@ -133,6 +133,15 @@ bool try_consume(Iterator begin, Iterator end,
 }
 
 template <class Iterator>
+void skip_whitespace(Iterator begin, Iterator end, Iterator & iter)
+{
+	for (iter = begin; iter != end; ++iter) {
+		if (!std::isspace(*iter))
+			return;
+	}
+}
+
+template <class Iterator>
 Null parse_null(Iterator begin, Iterator end, Iterator & iter)
 {
 	if (!try_consume(begin, end, "null", iter))
@@ -272,32 +281,29 @@ String parse_string(Iterator begin, Iterator end, Iterator & iter)
 }
 
 template <class Iterator>
-void skip_whitespace(Iterator begin, Iterator end, Iterator & iter)
-{
-	for (iter = begin; iter != end; ++iter) {
-		if (!std::isspace(*iter))
-			return;
-	}
-}
-
-template <class Iterator>
 Array parse_array(Iterator begin, Iterator end, Iterator & iter)
 {
 	Array array;
 	consume(begin, end, '[', iter);
+	char_type<Iterator> last_token = '[';
 	while (iter != end) {
 		skip_whitespace(iter, end, iter);
-		const auto value = parse_value(iter, end, iter);
-		array.emplace_back(std::move(value));
-		skip_whitespace(iter, end, iter);
-		if (iter != end) {
-			switch (*iter) {
-			case ',': ++iter; break;
-			case ']': ++iter; return array;
-			default:
+		const auto chr = *iter;
+		switch (chr) {
+		case ',':
+			if (last_token == '[' || last_token == ',')
+				throw ParseError("unexpected ',' token");
+			++iter; break;
+		case ']':
+			if (last_token == ',')
+				throw ParseError("unexpected ',' token");
+			return ++iter, array;
+		default:
+			if (last_token != '[' && last_token != ',')
 				throw ParseError("expected ',' or ']' token");
-			}
+			array.emplace_back(parse_value(iter, end, iter));
 		}
+		last_token = chr;
 	}
 	throw ParseError("unexpected end of input");
 }
@@ -317,21 +323,26 @@ template <class Iterator>
 Object parse_object(Iterator begin, Iterator end, Iterator & iter)
 {
 	Object object;
-	skip_whitespace(begin, end, iter);
-	consume(iter, end, '{', iter);
+	consume(begin, end, '{', iter);
+	char_type<Iterator> last_token = '{';
 	while (iter != end) {
 		skip_whitespace(iter, end, iter);
-		const auto pair = parse_pair(iter, end, iter);
-		object.emplace(std::move(pair));
-		skip_whitespace(iter, end, iter);
-		if (iter != end) {
-			switch (*iter) {
-			case ',': ++iter; break;
-			case '}': ++iter; return object;
-			default:
+		const auto chr = *iter;
+		switch (chr) {
+		case ',':
+			if (last_token == '{' || last_token == ',')
+				throw ParseError("unexpected ',' token");
+			++iter; break;
+		case '}':
+			if (last_token == ',')
+				throw ParseError("unexpected ',' token");
+			return ++iter, object;
+		default:
+			if (last_token != '{' && last_token != ',')
 				throw ParseError("expected ',' or '}' token");
-			}
+			object.emplace(parse_pair(iter, end, iter));
 		}
+		last_token = chr;
 	}
 	throw ParseError("unexpected end of input");
 }
@@ -427,16 +438,17 @@ Value parse_number(Iterator begin, Iterator end, Iterator & iter)
 template <class Iterator>
 Value parse_value(Iterator begin, Iterator end, Iterator & iter)
 {
-	if (begin == end)
+	skip_whitespace(begin, end, iter);
+	if (iter == end)
 		throw ParseError("unexpected end of input");
 	switch (*begin) {
-	case 'n': return parse_null(begin, end, iter);
-	case 't': return parse_true(begin, end, iter);
-	case 'f': return parse_false(begin, end, iter);
-	case '"': return parse_string(begin, end, iter);
-	case '[': return parse_array(begin, end, iter);
-	case '{': return parse_object(begin, end, iter);
-	default:  return parse_number(begin, end, iter);
+	case 'n': return parse_null(iter, end, iter);
+	case 't': return parse_true(iter, end, iter);
+	case 'f': return parse_false(iter, end, iter);
+	case '"': return parse_string(iter, end, iter);
+	case '[': return parse_array(iter, end, iter);
+	case '{': return parse_object(iter, end, iter);
+	default:  return parse_number(iter, end, iter);
 	}
 }
 

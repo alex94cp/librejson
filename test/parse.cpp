@@ -84,6 +84,11 @@ TEST(ParseTests, ParseStringWorks) {
 	ASSERT_EQ(value.as_string(), "abc");
 }
 
+TEST(ParseTests, ParseEmptyStringWorks) {
+	const auto value = rejson::parse("\"\"");
+	ASSERT_EQ(value.as_string(), "");
+}
+
 TEST(ParseTests, ParseSingleQuotedStringThrows) {
 	ASSERT_THROW({
 		rejson::parse("'abc'");
@@ -125,6 +130,11 @@ TEST(ParseTests, ParseArrayWorks) {
 	);
 }
 
+TEST(ParseTests, ParseEmptyArrayWorks) {
+	const auto value = rejson::parse("[]");
+	ASSERT_EQ(value.as_array().size(), 0);
+}
+
 TEST(ParseTests, ParseArrayWithTrailingCommaThrows) {
 	ASSERT_THROW({
 		rejson::parse("[1,]");
@@ -148,6 +158,11 @@ TEST(ParseTests, ParseObjectWorks) {
 	const auto & object = value.as_object();
 	const auto & foo = object.at("foo");
 	ASSERT_EQ(foo.as_int(), 123);
+}
+
+TEST(ParseTests, ParseEmptyObjectWorks) {
+	const auto value = rejson::parse("{}");
+	ASSERT_EQ(value.as_object().size(), 0);
 }
 
 TEST(ParseTests, ParseObjectWithNullKeyThrows) {
