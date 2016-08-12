@@ -353,9 +353,9 @@ int parse_sign_or(Iterator begin, Iterator end, int defvalue, Iterator & iter)
 	return defvalue;
 }
 
-template <class Iterator>
+template <class Iterator, typename Num>
 bool try_parse_num(Iterator begin, Iterator end,
-                   Iterator & iter, unsigned int & num)
+                   Iterator & iter, Num & num)
 {
 	num = 0;
 	iter = begin;
@@ -369,25 +369,15 @@ bool try_parse_num(Iterator begin, Iterator end,
 	return iter != begin;
 }
 
-template <class Iterator>
-unsigned int parse_num_or(Iterator begin, Iterator end,
-                          unsigned int defvalue, Iterator & iter)
-{
-	unsigned int num;
-	if (!try_parse_num(begin, end, iter, num))
-		return defvalue;
-	return num;
-}
-
-template <class Iterator>
-bool try_parse_frac(Iterator begin, Iterator end, Iterator & iter, double & frac)
+template <class Iterator, typename Frac>
+bool try_parse_frac(Iterator begin, Iterator end,
+                    Iterator & iter, Frac & frac)
 {
 	if (!try_consume(begin, end, '.', iter))
 		return false;
-	frac = 0;
 	double factor = 0.1;
 	const auto start = iter;
-	for (; iter != end; ++iter) {
+	for (frac = 0; iter != end; ++iter) {
 		const auto c = *iter;
 		if (!std::isdigit(c))
 			break;
@@ -403,36 +393,26 @@ int parse_exp_or(Iterator begin, Iterator end, int defvalue, Iterator & iter)
 	if (!try_consume(begin, end, 'e', iter)
 	    && !try_consume(begin, end, 'E', iter))
 		return defvalue;
-	const auto sig = parse_sign_or(iter, end, 1, iter);
 	unsigned int num;
+	const int sig = parse_sign_or(iter, end, +1, iter);
 	if (!try_parse_num(iter, end, iter, num))
 		return defvalue;
 	return sig * num;
 }
 
 template <class Iterator>
-bool try_parse_float(Iterator begin, Iterator end, Iterator & iter, Float & value)
+Value parse_number(Iterator begin, Iterator end, Iterator & iter)
 {
-	const auto sig = parse_sign_or(begin, end, 1, iter);
-	const auto num = parse_num_or(iter, end, 0, iter);
-	double frac;
-	if (!try_parse_frac(iter, end, iter, frac))
-		return false;
-	const auto exp = parse_exp_or(iter, end, 0, iter);
-	value = sig * (num + frac) * std::pow(10, exp);
-	return true;
-}
-
-template <class Iterator>
-bool try_parse_int(Iterator begin, Iterator end, Iterator & iter, Int & value)
-{
-	const auto sig = parse_sign_or(begin, end, 1, iter);
-	unsigned int num;
-	if (!try_parse_num(iter, end, iter, num))
-		return false;
-	const auto exp = parse_exp_or(iter, end, 0, iter);
-	value = sig * num * std::pow(10, exp);
-	return true;
+	unsigned long dec = 0; double frac = 0;
+	const int sig = parse_sign_or(begin, end, +1, iter);
+	const bool has_dec = try_parse_num(iter, end, iter, dec);
+	const bool has_frac = try_parse_frac(iter, end, iter, frac);
+	if (!has_dec && !has_frac)
+		throw ParseError("invalid value");
+	const int exp = parse_exp_or(iter, end, 0, iter);
+	if (!has_frac)
+		return static_cast<Int>(sig * dec * std::pow(10, exp));
+	return static_cast<Float>(sig * (dec + frac) * std::pow(10, exp));
 }
 
 template <class Iterator>
@@ -441,32 +421,14 @@ Value parse_value(Iterator begin, Iterator end, Iterator & iter)
 	if (begin == end)
 		throw ParseError("unexpected end of input");
 	switch (*begin) {
-	case 'n':
-		return parse_null(begin, end, iter);
-	case 't':
-		return parse_true(begin, end, iter);
-	case 'f':
-		return parse_false(begin, end, iter);
-	case '"':
-		return parse_string(begin, end, iter);
-	case '[':
-		return parse_array(begin, end, iter);
-	case '{':
-		return parse_object(begin, end, iter);
-	default: {
-		Iterator try_iter;
-		float float_;
-		if (try_parse_float(begin, end, try_iter, float_)) {
-			iter = try_iter;
-			return float_;
-		}
-		int int_;
-		if (try_parse_int(begin, end, try_iter, int_)) {
-			iter = try_iter;
-			return int_;
-		}
-		throw ParseError("invalid value");
-	} }
+	case 'n': return parse_null(begin, end, iter);
+	case 't': return parse_true(begin, end, iter);
+	case 'f': return parse_false(begin, end, iter);
+	case '"': return parse_string(begin, end, iter);
+	case '[': return parse_array(begin, end, iter);
+	case '{': return parse_object(begin, end, iter);
+	default:  return parse_number(begin, end, iter);
+	}
 }
 
 }
