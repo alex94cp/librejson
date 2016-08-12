@@ -3,8 +3,6 @@
 
 #include <rejson/value.hpp>
 
-#include <boost/spirit/home/support/iterators/istream_iterator.hpp>
-
 #include <algorithm>
 #include <cctype>
 #include <climits>
@@ -42,8 +40,8 @@ namespace rejson {
 		using std::basic_string_view;
 #	endif
 #else
-	template <typename T>
-	using basic_string_view = boost::basic_string_ref<T>;
+		template <typename T>
+		using basic_string_view = boost::basic_string_ref<T>;
 #endif
 
 using string_view = basic_string_view<char>;
@@ -457,10 +455,8 @@ Value parse(Iterator begin, Iterator end)
 template <typename CharT>
 Value parse(std::basic_istream<CharT> & is)
 {
-	return parse(
-		boost::spirit::basic_istream_iterator<CharT>(is),
-		boost::spirit::basic_istream_iterator<CharT>()
-	);
+	return parse(std::istream_iterator<CharT>(is),
+		         std::istream_iterator<CharT>());
 }
 
 }
