@@ -4,7 +4,7 @@
 
 namespace rejson {
 
-Value::Value() noexcept = default;
+Value::Value() noexcept {}
 Value::Value(const Value & other) = default;
 Value::Value(Value && other) = default;
 
