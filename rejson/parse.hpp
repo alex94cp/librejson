@@ -16,8 +16,6 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <iostream>
-
 #ifdef __has_include
 #	if __has_include(<string_view>)
 #		include <string_view>
@@ -385,34 +383,47 @@ bool try_parse_frac(Iterator begin, Iterator end, Iterator & iter, Frac & frac)
 	return iter != start;
 }
 
-template <class Iterator>
-int parse_exp_or(Iterator begin, Iterator end, int defvalue, Iterator & iter)
+template <class Iterator, typename Exp>
+bool try_parse_exp(Iterator begin, Iterator end, Iterator & iter, Exp & exp)
 {
-	if (!try_consume(begin, end, 'e', iter)
-	    && !try_consume(begin, end, 'E', iter))
-		return defvalue;
+	Iterator try_iter;
+	if (!try_consume(begin, end, 'e', try_iter)
+	    && !try_consume(begin, end, 'E', try_iter))
+		return false;
 	unsigned int num;
-	const int sig = parse_sign_or(iter, end, +1, iter);
-	if (!try_parse_num(iter, end, iter, num))
-		return defvalue;
-	return sig * num;
+	const int sig = parse_sign_or(try_iter, end, +1, try_iter);
+	if (!try_parse_num(try_iter, end, try_iter, num))
+		return false;
+	iter = try_iter;
+	exp = sig * num;
+	return true;
+}
+
+template <typename CharT>
+constexpr bool is_valid_number_start(CharT chr)
+{
+	return std::isdigit(chr) || chr == '-' || chr == '.';
 }
 
 template <class Iterator>
 Value parse_number(Iterator begin, Iterator end, Iterator & iter)
 {
-	if (begin == end)
+	iter = begin;
+	if (iter == end)
 		throw ParseError("unexpected enf of input");
-	unsigned int dec = 0; double frac = 0;
+	if (!is_valid_number_start(*iter))
+		throw ParseError("invalid value");
+	unsigned int dec = 0; double frac = 0; int exp = 0;
 	const long sig = parse_sign_or(begin, end, +1, iter);
 	const bool has_dec = try_parse_num(iter, end, iter, dec);
 	const bool has_frac = try_parse_frac(iter, end, iter, frac);
-	if (!has_dec && !has_frac)
+	const bool has_exp = try_parse_exp(iter, end, iter, exp);
+	const bool is_real = has_frac || has_exp;
+	if (!is_real && !has_dec)
 		throw ParseError("invalid value");
-	const int exp = parse_exp_or(iter, end, 0, iter);
-	if (!has_frac)
-		return static_cast<Int>(sig * dec * std::pow(10, exp));
-	return static_cast<Real>(sig * (dec + frac) * std::pow(10, exp));
+	if (!is_real)
+		return static_cast<Int>(sig * dec);
+	return sig * (dec + frac) * std::pow(10, exp);
 }
 
 template <class Iterator>

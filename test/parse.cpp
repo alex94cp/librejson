@@ -20,64 +20,45 @@ TEST(ParseTests, ParseFalseWorks) {
 	ASSERT_EQ(value.as_bool(), false);
 }
 
-TEST(ParseTests, ParseIntWorks) {
+TEST(ParseTests, ParseNumberGivesInt) {
 	const auto value = rejson::parse("123");
 	ASSERT_EQ(value.as_int(), 123);
 }
 
-TEST(ParseTests, ParsePositiveIntWorks) {
-	const auto value = rejson::parse("+123");
-	ASSERT_EQ(value.as_int(), 123);
-}
-
-TEST(ParseTests, ParseNegativeIntWorks) {
-	const auto value = rejson::parse("-123");
-	ASSERT_EQ(value.as_int(), -123);
-}
-
-TEST(ParseTests, ParseIntWithExpWorks) {
-	const auto value = rejson::parse("12e3");
-	ASSERT_EQ(value.as_int(), 12e3);
-}
-
-TEST(ParseTests, ParseIntWithPositiveExpWorks) {
-	const auto value = rejson::parse("12e+3");
-	ASSERT_EQ(value.as_int(), 12e3);
-}
-
-TEST(ParseTests, ParseIntWithNegativeExpWorks) {
-	const auto value = rejson::parse("12e-3");
-	ASSERT_EQ(value.as_int(), std::floor(12e-3));
-}
-
-TEST(ParseTests, ParseRealWorks) {
+TEST(ParseTests, ParseDecimalNumberGivesReal) {
 	const auto value = rejson::parse("1.23");
 	ASSERT_EQ(value.as_real(), 1.23);
 }
 
-TEST(ParseTests, ParsePositiveRealWorks) {
-	const auto value = rejson::parse("+1.23");
-	ASSERT_EQ(value.as_real(), 1.23);
+TEST(ParseTests, ParseNumberWithExpGivesReal) {
+	const auto value = rejson::parse("12e3");
+	ASSERT_EQ(value.as_real(), 12e3);
 }
 
-TEST(ParseTests, ParseNegativeRealWorks) {
+TEST(ParseTests, ParsePositiveSignedNumberThrows) {
+	ASSERT_THROW({
+		rejson::parse("+123");
+	}, rejson::ParseError);
+}
+
+TEST(ParseTests, ParseNegativeSignedNumberGivesInt) {
+	const auto value = rejson::parse("-123");
+	ASSERT_EQ(value.as_int(), -123);
+}
+
+TEST(ParseTests, ParseNegativeSignedDecimalNumberWorks) {
 	const auto value = rejson::parse("-1.23");
 	ASSERT_EQ(value.as_real(), -1.23);
 }
 
-TEST(ParseTests, ParseRealWithExpWorks) {
-	const auto value = rejson::parse("1.2e3");
-	ASSERT_EQ(value.as_real(), 1.2e3);
+TEST(ParseTests, ParseNumberWithPositiveSignedExpWorks) {
+	const auto value = rejson::parse("12e+3");
+	ASSERT_EQ(value.as_real(), 12e3);
 }
 
-TEST(ParseTests, ParseRealWithPositiveExpWorks) {
-	const auto value = rejson::parse("1.2e+3");
-	ASSERT_EQ(value.as_real(), 1.2e3);
-}
-
-TEST(ParseTests, ParseRealWithNegativeExpWorks) {
-	const auto value = rejson::parse("1.2e-3");
-	ASSERT_EQ(value.as_real(), 1.2e-3);
+TEST(ParseTests, ParseNumberWithNegativeSignedExpWorks) {
+	const auto value = rejson::parse("12e-3");
+	ASSERT_EQ(value.as_real(), 12e-3);
 }
 
 TEST(ParseTests, ParseStringWorks) {
