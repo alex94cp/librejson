@@ -10,6 +10,12 @@ TEST(ParseTests, ParseNullWorks) {
 	ASSERT_TRUE(value.is_null());
 }
 
+TEST(ParseTests, ParseUndefinedThrows) {
+	ASSERT_THROW({
+		rejson::parse("undefined");
+	}, rejson::ParseError);
+}
+
 TEST(ParseTests, ParseTrueWorks) {
 	const auto value = rejson::parse("true");
 	ASSERT_EQ(value.as_bool(), true);
@@ -18,6 +24,18 @@ TEST(ParseTests, ParseTrueWorks) {
 TEST(ParseTests, ParseFalseWorks) {
 	const auto value = rejson::parse("false");
 	ASSERT_EQ(value.as_bool(), false);
+}
+
+TEST(ParseTests, ParseInvalidTrueThrows) {
+	ASSERT_THROW({
+		rejson::parse("True");
+	}, rejson::ParseError);
+}
+
+TEST(ParseTests, ParseInvalidFalseThrows) {
+	ASSERT_THROW({
+		rejson::parse("False");
+	}, rejson::ParseError);
 }
 
 TEST(ParseTests, ParseNumberGivesInt) {
@@ -66,6 +84,18 @@ TEST(ParseTests, ParseStringWorks) {
 	ASSERT_EQ(value.as_string(), "abc");
 }
 
+TEST(ParseTests, ParseSingleQuotedStringThrows) {
+	ASSERT_THROW({
+		rejson::parse("'abc'");
+	}, rejson::ParseError);
+}
+
+TEST(ParseTests, ParseStringWithMissingEndingQuoteThrows) {
+	ASSERT_THROW({
+		rejson::parse("\"abc");
+	}, rejson::ParseError);
+}
+
 TEST(ParseTests, ParseEscapedStringWorks) {
 	const auto value = rejson::parse("\"\\n\"");
 	ASSERT_EQ(value.as_string(), "\n");
@@ -76,7 +106,7 @@ TEST(ParseTests, ParseCodePointStringWorks) {
 	ASSERT_EQ(value.as_string(), "\x41");
 }
 
-TEST(ParseTests, ParseStringThrowsIfUnescaped) {
+TEST(ParseTests, ParseUnescapedStringThrows) {
 	ASSERT_THROW({
 		rejson::parse("\"\t\"");
 	}, rejson::ParseError);
@@ -95,9 +125,85 @@ TEST(ParseTests, ParseArrayWorks) {
 	);
 }
 
+TEST(ParseTests, ParseArrayWithTrailingCommaThrows) {
+	ASSERT_THROW({
+		rejson::parse("[1,]");
+	}, rejson::ParseError);
+}
+
+TEST(ParseTests, ParseArrayWithConsecutiveCommasThrows) {
+	ASSERT_THROW({
+		rejson::parse("[1,,2]");
+	}, rejson::ParseError);
+}
+
+TEST(ParseTests, ParseArrayWithUndefinedItemThrows) {
+	ASSERT_THROW({
+		rejson::parse("[undefined]");
+	}, rejson::ParseError);
+}
+
 TEST(ParseTests, ParseObjectWorks) {
 	const auto value = rejson::parse("{ \"foo\": 123 }");
 	const auto & object = value.as_object();
 	const auto & foo = object.at("foo");
 	ASSERT_EQ(foo.as_int(), 123);
+}
+
+TEST(ParseTests, ParseObjectWithNullKeyThrows) {
+	ASSERT_THROW({
+		rejson::parse("{ null: 123 }");
+	}, rejson::ParseError);
+}
+
+TEST(ParseTests, ParseObjectWithBoolKeyThrows) {
+	ASSERT_THROW({
+		rejson::parse("{ true: 123 }");
+	}, rejson::ParseError);
+}
+
+TEST(ParseTests, ParseObjectWithTrailingCommaThrows) {
+	ASSERT_THROW({
+		rejson::parse("{ \"foo\": 123, }");
+	}, rejson::ParseError);
+}
+
+TEST(ParseTests, ParseObjectWithNumericKeyThrows) {
+	ASSERT_THROW({
+		rejson::parse("{ 123: 456 }");
+	}, rejson::ParseError);
+}
+
+TEST(ParseTests, ParseObjectWithSingleQuotedKeyThrows) {
+	ASSERT_THROW({
+		rejson::parse("{ 'foo': 123 }");
+	}, rejson::ParseError);
+}
+
+TEST(ParseTests, ParseObjectWithUnquotedKeyThrows) {
+	ASSERT_THROW({
+		rejson::parse("{ foo: 123 }");
+	}, rejson::ParseError);
+}
+
+TEST(ParseTests, ParseObjectWithSingleLineCommentThrows) {
+	ASSERT_THROW({
+		rejson::parse(R"({
+			"foo": 123 // comment
+		})");
+	}, rejson::ParseError);
+}
+
+TEST(ParseTests, ParseObjectWithMultilineCommentThrows) {
+	ASSERT_THROW({
+		rejson::parse(R"({
+			"foo": 123 /* comment */
+		})");
+	}, rejson::ParseError);
+}
+
+TEST(ParseTests, ParseObjectWithValueAloneThrows) {
+	ASSERT_THROW({
+		rejson::parse("{ 123 }");
+	}, rejson::ParseError);
 }

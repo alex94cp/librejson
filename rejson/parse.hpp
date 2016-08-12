@@ -307,12 +307,16 @@ Array parse_array(Iterator begin, Iterator end, Iterator & iter)
 template <class Iterator>
 KeyValuePair parse_pair(Iterator begin, Iterator end, Iterator & iter)
 {
-	const auto key = parse_string(begin, end, iter);
+	const auto key = parse_value(begin, end, iter);
+	if (!key.is_string())
+		throw ParseError("invalid key type");
 	skip_whitespace(iter, end, iter);
 	consume(iter, end, ':', iter);
 	skip_whitespace(iter, end, iter);
 	const auto value = parse_value(iter, end, iter);
-	return std::make_pair(std::move(key), std::move(value));
+	return std::make_pair(
+		std::move(key).as_string(), std::move(value)
+	);
 }
 
 template <class Iterator>
