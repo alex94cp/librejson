@@ -412,7 +412,7 @@ Value parse_number(Iterator begin, Iterator end, Iterator & iter)
 	const int exp = parse_exp_or(iter, end, 0, iter);
 	if (!has_frac)
 		return static_cast<Int>(sig * dec * std::pow(10, exp));
-	return static_cast<Float>(sig * (dec + frac) * std::pow(10, exp));
+	return static_cast<Real>(sig * (dec + frac) * std::pow(10, exp));
 }
 
 template <class Iterator>

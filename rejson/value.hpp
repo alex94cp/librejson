@@ -20,7 +20,7 @@ class Value;
 
 using Int = int;
 using Bool = bool;
-using Float = float;
+using Real = double;
 using String = std::string;
 using Null = std::nullptr_t;
 
@@ -32,13 +32,13 @@ template <class T>
 struct to_json;
 
 enum class ValueType {
-	Null, Int, Bool, Float, String, Object, Array
+	Null, Int, Real, Bool, String, Object, Array
 };
 
 class REJSON_EXPORT Value
 {
 	using value_storage_t = boost::variant<
-		boost::blank, Int, Bool, Float, String,
+		boost::blank, Int, Real, Bool, String,
 		boost::recursive_wrapper<Object>,
 		boost::recursive_wrapper<Array>
 	>;
@@ -48,9 +48,9 @@ public:
 	Value(Null n) noexcept;
 
 	Value(Int i);
+	Value(Real f);
 	Value(Bool b);
 	Value(Array a);
-	Value(Float f);
 	Value(String s);
 	Value(Object o);
 
@@ -78,28 +78,28 @@ public:
 	ValueType type() const;
 
 	bool is_int() const;
+	bool is_real() const;
 	bool is_null() const;
 	bool is_bool() const;
 	bool is_array() const;
-	bool is_float() const;
 	bool is_string() const;
 	bool is_object() const;
 
 	Int as_int() const;
+	Real as_real() const;
 	Bool as_bool() const;
-	Float as_float() const;
-
-	Array & as_array() &;
-	String & as_string() &;
-	Object & as_object() &;
-
-	const Array & as_array() const &;
-	const String & as_string() const &;
-	const Object & as_object() const &;
 
 	Array as_array() &&;
+	Array & as_array() &;
+	const Array & as_array() const &;
+
 	String as_string() &&;
+	String & as_string() &;
+	const String & as_string() const &;
+
 	Object as_object() &&;
+	Object & as_object() &;
+	const Object & as_object() const &;
 
 	void swap(Value & other);
 

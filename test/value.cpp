@@ -18,7 +18,7 @@ TEST(ValueTests, IsBoolReturnsTrueIfBool) {
 }
 
 TEST(ValueTests, IsFloatReturnsTrueIfFloat) {
-	ASSERT_TRUE(rejson::Value(1.23f).is_float());
+	ASSERT_TRUE(rejson::Value(1.23).is_real());
 }
 
 TEST(ValueTests, IsStringReturnsTrueIfString) {

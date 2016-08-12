@@ -50,34 +50,34 @@ TEST(ParseTests, ParseIntWithNegativeExpWorks) {
 	ASSERT_EQ(value.as_int(), std::floor(12e-3));
 }
 
-TEST(ParseTests, ParseFloatWorks) {
+TEST(ParseTests, ParseRealWorks) {
 	const auto value = rejson::parse("1.23");
-	ASSERT_EQ(value.as_float(), 1.23f);
+	ASSERT_EQ(value.as_real(), 1.23);
 }
 
-TEST(ParseTests, ParsePositiveFloatWorks) {
+TEST(ParseTests, ParsePositiveRealWorks) {
 	const auto value = rejson::parse("+1.23");
-	ASSERT_EQ(value.as_float(), 1.23f);
+	ASSERT_EQ(value.as_real(), 1.23);
 }
 
-TEST(ParseTests, ParseNegativeFloatWorks) {
+TEST(ParseTests, ParseNegativeRealWorks) {
 	const auto value = rejson::parse("-1.23");
-	ASSERT_EQ(value.as_float(), -1.23f);
+	ASSERT_EQ(value.as_real(), -1.23);
 }
 
-TEST(ParseTests, ParseFloatWithExpWorks) {
+TEST(ParseTests, ParseRealWithExpWorks) {
 	const auto value = rejson::parse("1.2e3");
-	ASSERT_EQ(value.as_float(), 1.2e3f);
+	ASSERT_EQ(value.as_real(), 1.2e3);
 }
 
-TEST(ParseTests, ParseFloatWithPositiveExpWorks) {
+TEST(ParseTests, ParseRealWithPositiveExpWorks) {
 	const auto value = rejson::parse("1.2e+3");
-	ASSERT_EQ(value.as_float(), 1.2e3f);
+	ASSERT_EQ(value.as_real(), 1.2e3);
 }
 
-TEST(ParseTests, ParseFloatWithNegativeExpWorks) {
+TEST(ParseTests, ParseRealWithNegativeExpWorks) {
 	const auto value = rejson::parse("1.2e-3");
-	ASSERT_EQ(value.as_float(), 1.2e-3f);
+	ASSERT_EQ(value.as_real(), 1.2e-3);
 }
 
 TEST(ParseTests, ParseStringWorks) {

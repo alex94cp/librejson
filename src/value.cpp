@@ -14,11 +14,11 @@ Value::Value(Null n) noexcept
 Value::Value(Int i)
 	: value_ { i } {}
 
+Value::Value(Real r)
+	: value_ { r } {}
+
 Value::Value(Bool b)
 	: value_ { b } {}
-
-Value::Value(Float f)
-	: value_ { f } {}
 
 Value::Value(String s)
 	: value_ { std::move(s) } {}
@@ -47,14 +47,14 @@ bool Value::is_null() const
 	return type() == ValueType::Null;
 }
 
+bool Value::is_real() const
+{
+	return type() == ValueType::Real;
+}
+
 bool Value::is_bool() const
 {
 	return type() == ValueType::Bool;
-}
-
-bool Value::is_float() const
-{
-	return type() == ValueType::Float;
 }
 
 bool Value::is_string() const
@@ -82,39 +82,9 @@ Bool Value::as_bool() const
 	return boost::get<Bool>(value_);
 }
 
-Float Value::as_float() const
+Real Value::as_real() const
 {
-	return boost::get<Float>(value_);
-}
-
-const Array & Value::as_array() const &
-{
-	return boost::get<Array>(value_);
-}
-
-const String & Value::as_string() const &
-{
-	return boost::get<String>(value_);
-}
-
-const Object & Value::as_object() const &
-{
-	return boost::get<Object>(value_);
-}
-
-Array & Value::as_array() &
-{
-	return boost::get<Array>(value_);
-}
-
-String & Value::as_string() &
-{
-	return boost::get<String>(value_);
-}
-
-Object & Value::as_object() &
-{
-	return boost::get<Object>(value_);
+	return boost::get<Real>(value_);
 }
 
 Array Value::as_array() &&
@@ -122,14 +92,44 @@ Array Value::as_array() &&
 	return std::move(boost::get<Array>(value_));
 }
 
+Array & Value::as_array() &
+{
+	return boost::get<Array>(value_);
+}
+
+const Array & Value::as_array() const &
+{
+	return boost::get<Array>(value_);
+}
+
 String Value::as_string() &&
 {
 	return std::move(boost::get<String>(value_));
 }
 
+String & Value::as_string() &
+{
+	return boost::get<String>(value_);
+}
+
+const String & Value::as_string() const &
+{
+	return boost::get<String>(value_);
+}
+
 Object Value::as_object() &&
 {
 	return std::move(boost::get<Object>(value_));
+}
+
+Object & Value::as_object() &
+{
+	return boost::get<Object>(value_);
+}
+
+const Object & Value::as_object() const &
+{
+	return boost::get<Object>(value_);
 }
 
 void Value::swap(Value & other)
