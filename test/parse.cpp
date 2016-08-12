@@ -2,6 +2,7 @@
 #include <rejson/parse.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <iterator>
 
 TEST(ParseTests, ParseNullWorks) {
@@ -24,9 +25,59 @@ TEST(ParseTests, ParseIntWorks) {
 	ASSERT_EQ(value.as_int(), 123);
 }
 
+TEST(ParseTests, ParsePositiveIntWorks) {
+	const auto value = rejson::parse("+123");
+	ASSERT_EQ(value.as_int(), 123);
+}
+
+TEST(ParseTests, ParseNegativeIntWorks) {
+	const auto value = rejson::parse("-123");
+	ASSERT_EQ(value.as_int(), -123);
+}
+
+TEST(ParseTests, ParseIntWithExpWorks) {
+	const auto value = rejson::parse("12e3");
+	ASSERT_EQ(value.as_int(), 12e3);
+}
+
+TEST(ParseTests, ParseIntWithPositiveExpWorks) {
+	const auto value = rejson::parse("12e+3");
+	ASSERT_EQ(value.as_int(), 12e3);
+}
+
+TEST(ParseTests, ParseIntWithNegativeExpWorks) {
+	const auto value = rejson::parse("12e-3");
+	ASSERT_EQ(value.as_int(), std::floor(12e-3));
+}
+
 TEST(ParseTests, ParseFloatWorks) {
 	const auto value = rejson::parse("1.23");
 	ASSERT_EQ(value.as_float(), 1.23f);
+}
+
+TEST(ParseTests, ParsePositiveFloatWorks) {
+	const auto value = rejson::parse("+1.23");
+	ASSERT_EQ(value.as_float(), 1.23f);
+}
+
+TEST(ParseTests, ParseNegativeFloatWorks) {
+	const auto value = rejson::parse("-1.23");
+	ASSERT_EQ(value.as_float(), -1.23f);
+}
+
+TEST(ParseTests, ParseFloatWithExpWorks) {
+	const auto value = rejson::parse("1.2e3");
+	ASSERT_EQ(value.as_float(), 1.2e3f);
+}
+
+TEST(ParseTests, ParseFloatWithPositiveExpWorks) {
+	const auto value = rejson::parse("1.2e+3");
+	ASSERT_EQ(value.as_float(), 1.2e3f);
+}
+
+TEST(ParseTests, ParseFloatWithNegativeExpWorks) {
+	const auto value = rejson::parse("1.2e-3");
+	ASSERT_EQ(value.as_float(), 1.2e-3f);
 }
 
 TEST(ParseTests, ParseStringWorks) {

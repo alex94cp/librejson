@@ -354,8 +354,7 @@ int parse_sign_or(Iterator begin, Iterator end, int defvalue, Iterator & iter)
 }
 
 template <class Iterator, typename Num>
-bool try_parse_num(Iterator begin, Iterator end,
-                   Iterator & iter, Num & num)
+bool try_parse_num(Iterator begin, Iterator end, Iterator & iter, Num & num)
 {
 	num = 0;
 	iter = begin;
@@ -370,8 +369,7 @@ bool try_parse_num(Iterator begin, Iterator end,
 }
 
 template <class Iterator, typename Frac>
-bool try_parse_frac(Iterator begin, Iterator end,
-                    Iterator & iter, Frac & frac)
+bool try_parse_frac(Iterator begin, Iterator end, Iterator & iter, Frac & frac)
 {
 	if (!try_consume(begin, end, '.', iter))
 		return false;
@@ -403,8 +401,10 @@ int parse_exp_or(Iterator begin, Iterator end, int defvalue, Iterator & iter)
 template <class Iterator>
 Value parse_number(Iterator begin, Iterator end, Iterator & iter)
 {
-	unsigned long dec = 0; double frac = 0;
-	const int sig = parse_sign_or(begin, end, +1, iter);
+	if (begin == end)
+		throw ParseError("unexpected enf of input");
+	unsigned int dec = 0; double frac = 0;
+	const long sig = parse_sign_or(begin, end, +1, iter);
 	const bool has_dec = try_parse_num(iter, end, iter, dec);
 	const bool has_frac = try_parse_frac(iter, end, iter, frac);
 	if (!has_dec && !has_frac)
