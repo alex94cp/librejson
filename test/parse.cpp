@@ -53,6 +53,24 @@ TEST(ParseTests, ParseNumberWithExpGivesReal) {
 	ASSERT_EQ(value.as_real(), 12e3);
 }
 
+TEST(ParseTests, ParseZeroIntWorks) {
+	ASSERT_NO_THROW({
+		rejson::parse("0");
+	});
+}
+
+TEST(ParseTests, ParseIntNumberStartingWithZeroThrows) {
+	ASSERT_THROW({
+		rejson::parse("0123");
+	}, rejson::ParseError);
+}
+
+TEST(ParseTests, ParseRealNumberStartingWithZeroWorks) {
+	ASSERT_NO_THROW({
+		rejson::parse("0.123");
+	});
+}
+
 TEST(ParseTests, ParsePositiveSignedNumberThrows) {
 	ASSERT_THROW({
 		rejson::parse("+123");

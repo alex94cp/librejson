@@ -62,6 +62,14 @@ auto next_char(Iterator begin, Iterator end, Iterator & iter)
 	return chr;
 }
 
+template <class Iterator>
+char_type<Iterator> peek_char(Iterator begin, Iterator end)
+{
+	if (begin == end)
+		throw ParseError("unexpected end of input");
+	return *begin;
+}
+
 template <class Iterator, typename CharT>
 void consume(Iterator begin, Iterator end, CharT token, Iterator & iter)
 {
@@ -386,20 +394,22 @@ template <class Iterator>
 Value parse_number(Iterator begin, Iterator end, Iterator & iter)
 {
 	iter = begin;
-	if (iter == end)
-		throw ParseError("unexpected enf of input");
-	if (!is_valid_number_start(*iter))
+	Int dec = 0, exp = 0; Real frac = 0;
+	if (!is_valid_number_start(peek_char(iter, end)))
 		throw ParseError("invalid value");
-	unsigned int dec = 0; double frac = 0; int exp = 0;
-	const long sig = parse_sign_or(begin, end, +1, iter);
+	const long sig = parse_sign_or(iter, end, +1, iter);
+	const auto dec_start = peek_char(iter, end);
 	const bool has_dec = try_parse_num(iter, end, iter, dec);
 	const bool has_frac = try_parse_frac(iter, end, iter, frac);
 	const bool has_exp = try_parse_exp(iter, end, iter, exp);
 	const bool is_real = has_frac || has_exp;
-	if (!is_real && !has_dec)
-		throw ParseError("invalid value");
-	if (!is_real)
+	if (!is_real) {
+		if (!has_dec)
+			throw ParseError("invalid value");
+		if (dec_start == '0' && dec != 0)
+			throw ParseError("invalid value");
 		return static_cast<Int>(sig * dec);
+	}
 	return sig * (dec + frac) * std::pow(10, exp);
 }
 
