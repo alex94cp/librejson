@@ -2,6 +2,7 @@
 #define REJSON_PARSE_HPP_
 
 #include <rejson/value.hpp>
+#include <rejson/detail/string_view.hpp>
 
 #include <algorithm>
 #include <cctype>
@@ -14,50 +15,17 @@
 #include <sstream>
 #include <stdexcept>
 
-#ifdef __has_include
-#	if __has_include(<string_view>)
-#		include <string_view>
-#		define rejson_have_string_view 1
-#	elif __has_include(<experimental/string_view>)
-#		include <experimental/string_view>
-#		define rejson_have_string_view 1
-#		define rejson_experimental_string_view 1
-#	else
-#		define rejson_have_string_view 0
-#	endif
-#endif
-
-#if !rejson_have_string_view
-#	include <boost/utility/string_ref.hpp>
-#endif
-
 namespace rejson {
-
-#if rejson_have_string_view
-#	ifdef rejson_experimental_string_view
-		using std::experimental::basic_string_view;
-#	else
-		using std::basic_string_view;
-#	endif
-#else
-		template <typename T>
-		using basic_string_view = boost::basic_string_ref<T>;
-#endif
-
-using string_view = basic_string_view<char>;
-using wstring_view = basic_string_view<wchar_t>;
-using u16string_view = basic_string_view<char16_t>;
-using u32string_view = basic_string_view<char32_t>;
 
 class REJSON_EXPORT ParseError : public std::runtime_error
 {
 	using runtime_error::runtime_error;
 };
 
-REJSON_EXPORT Value parse(string_view sv);
-REJSON_EXPORT Value parse(wstring_view sv);
-REJSON_EXPORT Value parse(u16string_view sv);
-REJSON_EXPORT Value parse(u32string_view sv);
+REJSON_EXPORT Value parse(detail::string_view sv);
+REJSON_EXPORT Value parse(detail::wstring_view sv);
+REJSON_EXPORT Value parse(detail::u16string_view sv);
+REJSON_EXPORT Value parse(detail::u32string_view sv);
 
 template <class Iterator>
 Value parse(Iterator begin, Iterator end);
@@ -464,7 +432,7 @@ template <typename CharT>
 Value parse(std::basic_istream<CharT> & is)
 {
 	return parse(std::istream_iterator<CharT>(is),
-		         std::istream_iterator<CharT>());
+	             std::istream_iterator<CharT>());
 }
 
 }

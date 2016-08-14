@@ -4,10 +4,8 @@
 #include <rejson/export.h>
 
 #include <boost/variant/variant.hpp>
-#include <boost/variant/apply_visitor.hpp>
 #include <boost/variant/recursive_wrapper.hpp>
 
-#include <iterator>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
@@ -131,7 +129,7 @@ template <class V, std::enable_if_t<
 	std::is_constructible<Value, typename V::value_type>::value
 >... >
 Value::Value(const V & v)
-	: Value { Array(std::begin(v), std::end(v)) } {}
+	: Value { Array(v.begin(), v.end()) } {}
 
 }
 

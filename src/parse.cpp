@@ -2,22 +2,22 @@
 
 namespace rejson {
 
-Value parse(string_view sv)
+Value parse(detail::string_view sv)
 {
 	return parse(sv.begin(), sv.end());
 }
 
-Value parse(wstring_view sv)
+Value parse(detail::wstring_view sv)
 {
 	return parse(sv.begin(), sv.end());
 }
 
-Value parse(u16string_view sv)
+Value parse(detail::u16string_view sv)
 {
 	return parse(sv.begin(), sv.end());
 }
 
-Value parse(u32string_view sv)
+Value parse(detail::u32string_view sv)
 {
 	return parse(sv.begin(), sv.end());
 }
