@@ -9,7 +9,7 @@ namespace rejson {
 
 namespace {
 
-auto make_object_accessor(std::string key)
+inline auto make_object_accessor(std::string key)
 {
 	return [key = std::move(key)] (Value & v) -> Value * {
 		auto & object = v.as_object();
@@ -20,7 +20,7 @@ auto make_object_accessor(std::string key)
 	};
 }
 
-auto make_array_accessor(std::size_t index)
+inline auto make_array_accessor(std::size_t index)
 {
 	return [index] (Value & v) -> Value * {
 		auto & array = v.as_array();
@@ -86,9 +86,9 @@ Value * Path::resolve(Value & v) const
 	return result;
 }
 
-const Value * Path::resolve(const Value & v) const
+const Value * Path::resolve(const Value & cv) const
 {
-	return resolve(const_cast<Value &>(v));
+	return resolve(const_cast<Value &>(cv));
 }
 
 Value * get(Value & root, const Path & path)
